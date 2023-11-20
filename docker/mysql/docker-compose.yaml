@@ -1,0 +1,14 @@
+version: '3.8'                                                  # Version của docker compose
+services:
+  database-mysql:                                               # Tên của service (Tự đặt tên)
+    image: mysql:8.0                                            # Image 
+    restart: always                                             # Nếu có lỗi nó sẽ luôn luôn restart lại
+    environment:
+      - MYSQL_DATABASE=deploynodejsbackend                      
+      - MYSQL_ROOT_PASSWORD=nguyentrungkien
+    ports:
+      - '3307:3306' 
+      # Cái port chạy mặc định của con mysql này bên trong con docker là cổng 3306. 
+      # Nếu chúng ta muốn access vào con mysql này thì chúng ta sẽ mở cổng 3307 để cho phép giao tiếp với con mysql này
+    expose:
+      - 3306
