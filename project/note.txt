@@ -1,0 +1,1 @@
++ Gõ: docker compose -p deploy-project-container up -d

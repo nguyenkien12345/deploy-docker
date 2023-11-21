@@ -1,0 +1,51 @@
+version: '3.8'                                                  # Version của docker compose
+services:
+  database-mysql:                                               # Tên của service (Tự đặt tên)
+    image: mysql:8.0                                            # Kéo Image mysql:8.0 từ dockerhub về 
+    restart: always                                             # Nếu có lỗi nó sẽ luôn luôn restart lại
+    environment:
+      - MYSQL_DATABASE=deploynodejsbackend                      
+      - MYSQL_ROOT_PASSWORD=nguyentrungkien
+    ports:
+      - '3307:3306' 
+      # Cái port chạy mặc định của con mysql này bên trong con docker là cổng 3306. 
+      # Nếu chúng ta muốn access vào con mysql này thì chúng ta sẽ mở cổng 3307 để cho phép giao tiếp với con mysql này
+    expose:
+      # Chúng ta sẽ mở ra một cái port 3306 để cho các thằng service/images/container khác có thể giao tiếp, nói chuyện được với con mysql của chúng ta
+      - 3306
+
+  backend:                                                      # Tên của service (Tự đặt tên)
+    build:
+      # context: Phạm vi source code mà chúng ta muốn build
+      # . có nghĩa là chúng ta sẽ đứng ngay tại thư mục hoidanit-backend-nodejs luôn và đi tìm cái file Dockerfile để build
+      context: ../hoidanit-backend-nodejs
+      dockerfile: Dockerfile
+    restart: unless-stopped                                     # Nếu có lỗi nó sẽ luôn luôn restart lại
+    environment:
+        # Chúng ta sẽ ghi đè lại các tham số môi trường trong file env
+        # Nó tương đương với đường link localhost của chúng ta (host.docker.internal). Nó sẽ giúp thằng docker trọc ra được ngoài localhost
+        # - DB_HOST=host.docker.internal
+        # Chúng ta sẽ kết nối (giao tiếp) với service có tên là database-mysql thông qua port 3306 mà service database-mysql đã mở để cho
+        # phép các service khác có thể giao tiếp  với nó 
+        - DB_PORT=3306
+        - DB_HOST=database-mysql
+        - URL_REACT=http://localhost
+    ports:
+        - '8080:8080' 
+        # Cái port chạy mặc định của con backend này bên trong con docker là cổng 8080. 
+        # Nếu chúng ta muốn access vào con backend này thì chúng ta sẽ mở cổng 8080 để cho phép giao tiếp với con backend này
+    expose:
+      # Chúng ta sẽ mở ra một cái port 8080 để cho các thằng service/images/container khác có thể giao tiếp, nói chuyện được với con backend của chúng ta
+      - 8080
+
+  nginx:                                                           # Tên của service (Tự đặt tên)
+    image: nginx:1.23.3                                            # Kéo Image nginx:1.23.3 từ dockerhub về 
+    ports:
+      - '80:80' 
+      # Cái port chạy mặc định của con nginx này bên trong con docker là cổng 80. 
+      # Nếu chúng ta muốn access vào con nginx này thì chúng ta sẽ mở cổng 80 để cho phép giao tiếp với con nginx này
+    volumes:
+      # Nó sẽ lấy tất cả nội dung trong thư mục build của dự án hoidanit-frontend-reactjs và ghi đè lại thư mục html của thằng nginx trong usr/share/nginx/html
+      - ../hoidanit-frontend-reactjs/build:/usr/share/nginx/html
+      # Ghi đè file nginx.conf của chúng ta lên file nginx.conf của folder etc/nginx của thằng nginx
+      - ./nginx.conf:/etc/nginx/nginx.conf
